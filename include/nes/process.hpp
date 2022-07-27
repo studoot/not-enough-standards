@@ -170,6 +170,7 @@ private:
 enum class process_options : std::uint32_t
 {
     none = 0x00,
+    detached = 0x01,
 #ifdef NES_PROCESS_PIPE_EXTENSION
     grab_stdout = 0x10,
     grab_stderr = 0x20,
@@ -332,7 +333,8 @@ public:
     #endif
 
         PROCESS_INFORMATION process_info{};
-        if(!CreateProcessW(std::data(native_path), null_or_data(args_str), nullptr, nullptr, TRUE, 0, nullptr, null_or_data(native_working_directory), &startup_info, &process_info))
+        const DWORD creation_flags = (static_cast<bool>(options & process_options::detached) ? DETACHED_PROCESS : 0);
+        if (!CreateProcessW(std::data(native_path), null_or_data(args_str), nullptr, nullptr, TRUE, creation_flags, nullptr, null_or_data(native_working_directory), &startup_info, &process_info))
             throw std::runtime_error{"Failed to create process. " + get_error_message()};
 
         m_id = static_cast<id>(process_info.dwProcessId);
